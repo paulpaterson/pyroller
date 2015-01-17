@@ -167,9 +167,11 @@ class BallMachine(common.Drawable, loggable.Loggable):
         # Calculate how close we are to choosing a new ball
         fraction = 1.0 - self.timer.get_fraction_to_go()
         if fraction > 0.95:
-            self.spout_sprites[-1].draw(surface)
+            spout_sprite = self.spout_sprites[-1]
         else:
-            self.spout_sprites[int(fraction * (S['spout-number'] - 1))].draw(surface)
+            spout_sprite = self.spout_sprites[int(fraction * (S['spout-number'] - 1))]
+        spout_sprite.dirty = True
+        spout_sprite.draw(surface)
 
     def call_next_ball(self):
         """Immediately call the next ball"""
@@ -198,10 +200,10 @@ class CalledBallTray(pg.sprite.LayeredDirty, loggable.Loggable):
         self.dropping_balls = common.pg.sprite.LayeredDirty()
         self.moving_balls = common.pg.sprite.LayeredDirty()
         #
+        self.add(common.NamedSprite('bingo-grill', S['machine-background-position']))
         self.add(self.dropping_balls)
         self.add(self.moving_balls)
         self.add(self.conveyor)
-        self.add(common.NamedSprite('bingo-grill', S['machine-background-position']))
 
     def call_ball(self, ball):
         """Call a particular ball"""
@@ -222,6 +224,7 @@ class CalledBallTray(pg.sprite.LayeredDirty, loggable.Loggable):
         if self.current_x > S['conveyor-repeat']:
             self.current_x -= S['conveyor-repeat']
         self.conveyor.rect.x = self.initial_x + self.current_x
+        self.conveyor.dirty = True
         self.move_balls(increment)
 
     def ball_falling(self, ball):
