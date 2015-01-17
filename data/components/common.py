@@ -121,7 +121,9 @@ class Drawable(pg.sprite.DirtySprite):
 
     def draw(self, surface):
         """Draw this item onto the given surface"""
-        surface.blit(self.image, self.rect)
+        if self.dirty:
+            surface.blit(self.image, self.rect)
+            self.dirty = False
 
 
 class DrawableGroup(pg.sprite.LayeredDirty):

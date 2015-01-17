@@ -141,7 +141,7 @@ class Bingo(statemachine.StateMachine):
         self.lobby_button.update(mouse_pos)
         self.new_game_button.update(mouse_pos)
         #
-        # surface.fill(S['table-color'])
+        self.bg.draw(surface)
         #
         self.lobby_button.draw(surface)
         self.new_game_button.draw(surface)
@@ -191,6 +191,11 @@ class Bingo(statemachine.StateMachine):
         self.next_chip_button.linkEvent(common.E_MOUSE_CLICK, self.next_chip)
         self.ui.append(self.next_chip_button)
         self.buttons.add(self.next_chip_button)
+        #
+        self.bg = common.Drawable()
+        self.bg.image = pg.Surface(prepare.RENDER_SIZE)
+        self.bg.image.fill(prepare.FELT_GREEN)
+        self.bg.rect = pg.Rect(0, 0, *self.bg.image.get_size())
         #
         # Menu bar
         self.menu_bar = common.NamedSprite(
