@@ -136,6 +136,7 @@ class Bingo(statemachine.StateMachine):
 
     def drawUI(self, surface, scale):
         """Update the main surface once per frame"""
+        # TODO: need to handle the first time we enter the game - entire screen is dirty
         mouse_pos = tools.scaled_mouse_pos(scale, pg.mouse.get_pos())
         self.lobby_button.update(mouse_pos)
         self.new_game_button.update(mouse_pos)
@@ -145,7 +146,7 @@ class Bingo(statemachine.StateMachine):
         self.lobby_button.draw(surface)
         self.new_game_button.draw(surface)
         # self.all_cards.draw(surface)
-        # self.ball_machine.draw(surface)
+        self.ball_machine.draw(surface)
         self.buttons.draw(surface)
         self.card_selector.draw(surface)
         # self.money_display.draw(surface)

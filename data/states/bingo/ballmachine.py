@@ -159,6 +159,7 @@ class BallMachine(common.Drawable, loggable.Loggable):
 
     def draw(self, surface):
         """Draw the machine"""
+        #
         self.ui.draw(surface)
         self.called_balls_ui.update(self.state.dt * S['conveyor-speed'] / self.interval)
         self.cog.update(self.state.dt * S['machine-cog-speed'] / self.interval)
@@ -332,4 +333,9 @@ class CogWheel(common.Drawable):
         self.angle = (self.angle + increment) % 360
         # TODO: refactor the rotation logic - should be built into sprite
         surface = self.sprites[self.speed].image.copy()
+        x, y = self.rect.x + self.rect.width / 2, self.rect.y + self.rect.height / 2
         self.image = pg.transform.rotozoom(surface, self.angle, 1.0)
+        w, h = self.image.get_size()
+        self.rect = pg.Rect(x - w / 2, y - h / 2, w, h)
+        #
+        self.dirty = True

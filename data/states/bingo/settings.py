@@ -164,7 +164,7 @@ SETTINGS = {
 
     #
     # Cog wheel
-    'machine-cog-position': (1360, 170),
+    'machine-cog-position': (1300, 120),
     'machine-cog-speed': 450 / 600 * 500,
     'machine-speeds': [
         # Text, interval (s), balls to increase
