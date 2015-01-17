@@ -142,8 +142,8 @@ class Bingo(statemachine.StateMachine):
         #
         # surface.fill(S['table-color'])
         #
-        # self.lobby_button.draw(surface)
-        # self.new_game_button.draw(surface)
+        self.lobby_button.draw(surface)
+        self.new_game_button.draw(surface)
         # self.all_cards.draw(surface)
         # self.ball_machine.draw(surface)
         self.buttons.draw(surface)
