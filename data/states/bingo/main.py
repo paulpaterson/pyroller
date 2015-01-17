@@ -51,12 +51,12 @@ class Bingo(statemachine.StateMachine):
         #
         self.winning_pattern = patterns.PATTERNS[0]
         #
-        self.pattern_buttons = common.DrawableGroup()
-        self.debug_buttons = common.DrawableGroup()
-        self.buttons = common.DrawableGroup([self.pattern_buttons])
+        self.pattern_buttons = common.pg.sprite.LayeredDirty()
+        self.debug_buttons = common.pg.sprite.LayeredDirty()
+        self.buttons = common.pg.sprite.LayeredDirty([self.pattern_buttons])
         #
         if prepare.DEBUG:
-            self.buttons.append(self.debug_buttons)
+            self.buttons.add(self.debug_buttons)
         #
         super(Bingo, self).__init__()
         #
@@ -65,9 +65,11 @@ class Bingo(statemachine.StateMachine):
         self.ball_machine.start_machine()
         self.ui.append(self.ball_machine.buttons)
         #
-        self.all_cards = common.DrawableGroup()
-        self.all_cards.extend(self.cards)
-        self.all_cards.extend(self.dealer_cards)
+        self.all_cards = common.pg.sprite.LayeredDirty()
+        for item in self.cards:
+            self.all_cards.add(item)
+        for item in self.dealer_cards:
+            self.all_cards.add(item)
         #
         B.linkEvent(events.E_PLAYER_PICKED, self.player_picked)
         B.linkEvent(events.E_PLAYER_UNPICKED, self.player_unpicked)
@@ -138,15 +140,15 @@ class Bingo(statemachine.StateMachine):
         self.lobby_button.update(mouse_pos)
         self.new_game_button.update(mouse_pos)
         #
-        surface.fill(S['table-color'])
+        # surface.fill(S['table-color'])
         #
-        self.lobby_button.draw(surface)
-        self.new_game_button.draw(surface)
-        self.all_cards.draw(surface)
-        self.ball_machine.draw(surface)
+        # self.lobby_button.draw(surface)
+        # self.new_game_button.draw(surface)
+        # self.all_cards.draw(surface)
+        # self.ball_machine.draw(surface)
         self.buttons.draw(surface)
-        self.card_selector.draw(surface)
-        self.money_display.draw(surface)
+        # self.card_selector.draw(surface)
+        # self.money_display.draw(surface)
         #
 
     def initUI(self):
@@ -165,7 +167,7 @@ class Bingo(statemachine.StateMachine):
             )
             new_button.linkEvent(common.E_MOUSE_CLICK, self.change_pattern, pattern)
             new_button.pattern = pattern
-            self.pattern_buttons.append(new_button)
+            self.pattern_buttons.add(new_button)
         self.ui.extend(self.pattern_buttons)
         #
         # Simple generator to flash the potentially winning squares
@@ -186,17 +188,17 @@ class Bingo(statemachine.StateMachine):
         )
         self.next_chip_button.linkEvent(common.E_MOUSE_CLICK, self.next_chip)
         self.ui.append(self.next_chip_button)
-        self.buttons.append(self.next_chip_button)
+        self.buttons.add(self.next_chip_button)
         #
         # Menu bar
         self.menu_bar = common.NamedSprite(
             'bingo-menu-bar', S['menu-bar-position'], scale=S['menu-bar-scale']
         )
-        self.buttons.append(self.menu_bar)
+        self.buttons.add(self.menu_bar)
         #
         # Debugging buttons
         if prepare.DEBUG and S['show-debug-buttons']:
-            self.debug_buttons.append(common.ImageOnOffButton(
+            self.debug_buttons.add(common.ImageOnOffButton(
                 'auto-pick', S['debug-auto-pick-position'],
                 'bingo-yellow-button', 'bingo-yellow-off-button', 'small-button',
                 'Auto pick',
@@ -205,7 +207,7 @@ class Bingo(statemachine.StateMachine):
             ))
             self.debug_buttons[-1].linkEvent(common.E_MOUSE_CLICK, self.toggle_auto_pick)
             #
-            self.debug_buttons.append(common.ImageButton(
+            self.debug_buttons.add(common.ImageButton(
                 'restart', S['debug-restart-position'],
                 'bingo-yellow-button', 'small-button',
                 'Restart',
@@ -213,7 +215,7 @@ class Bingo(statemachine.StateMachine):
             ))
             self.debug_buttons[-1].linkEvent(common.E_MOUSE_CLICK, self.restart_game)
             #
-            self.debug_buttons.append(common.ImageButton(
+            self.debug_buttons.add(common.ImageButton(
                 'next-ball', S['debug-next-ball-position'],
                 'bingo-yellow-button', 'small-button',
                 'Next Ball',
@@ -221,7 +223,7 @@ class Bingo(statemachine.StateMachine):
             ))
             self.debug_buttons[-1].linkEvent(common.E_MOUSE_CLICK, self.next_ball)
             #
-            self.debug_buttons.append(common.ImageButton(
+            self.debug_buttons.add(common.ImageButton(
                 'new-cards', S['debug-new-cards-position'],
                 'bingo-yellow-button', 'small-button',
                 'New Cards',
@@ -260,7 +262,7 @@ class Bingo(statemachine.StateMachine):
         # Clear all flashing squares
         for card in self.all_cards:
             card.potential_winning_squares = []
-            for square in card.squares.values():
+            for square in card.squares.sprites():
                 square.is_focused = False
         #
         # Update UI

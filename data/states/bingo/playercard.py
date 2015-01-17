@@ -76,9 +76,8 @@ class PlayerCard(bingocard.BingoCard):
         # Button states
         self.states = [common.NamedSprite(state_name, label_position) for state_name in self.state_names]
         #
-        self.drawables.extend([
-            self.double_down_button, self.value_label,
-        ])
+        self.drawables.add(self.double_down_button)
+        self.drawables.add(self.value_label)
         self.clickables.append(self.double_down_button)
 
     def update_value(self, value):

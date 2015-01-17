@@ -102,7 +102,9 @@ class ClickableGroup(list, EventAware):
     def process_events(self, event, scale=(1, 1)):
         """Process all the events"""
         for item in self:
-            item.process_events(event, scale)
+            # TODO: remove this - just here when migrating to dirty sprite implementation
+            if hasattr(item, 'process_events'):
+                item.process_events(event, scale)
 
     def clear(self):
         """Remove all the items from the group
@@ -116,41 +118,34 @@ class ClickableGroup(list, EventAware):
             self[:] = []
 
 
-class Drawable(object):
+class Drawable(pg.sprite.DirtySprite):
     """Simple base class for all screen objects"""
 
     def draw(self, surface):
         """Draw this item onto the given surface"""
-        raise NotImplementedError('Need to implement the draw method')
+        surface.blit(self.image, self.rect)
 
 
-class DrawableGroup(list, Drawable):
-    """A list of drawable items"""
+class KeyedDrawableGroup(pg.sprite.Group):
+    """A drawable group based on a dictionary so you can retrieve items
 
-    def draw(self, surface):
-        """Draw all these items onto the given surface"""
-        for item in self:
-            item.draw(surface)
+    TODO: Fix that the group and the dictionary can get into an inconsistent state
 
-    def clear(self):
-        """Remove all the items from the group
+    """
 
-        Compatibility method for python2, where lists don't have a clear method
+    def __init__(self):
+        """Initialise the group"""
+        self._items = {}
+        pg.sprite.Group.__init__(self)
 
-        """
-        try:
-            super(DrawableGroup, self).clear()
-        except AttributeError:
-            self[:] = []
+    def __setitem__(self, key, value):
+        """Add an item"""
+        self.add(value)
+        self._items[key] = value
 
-
-class KeyedDrawableGroup(collections.OrderedDict, Drawable):
-    """A drawable group based on a dictionary so you can retrieve items"""
-
-    def draw(self, surface):
-        """Draw all the items to the given surface"""
-        for item in self.values():
-            item.draw(surface)
+    def __getitem__(self, item):
+        """Return an item"""
+        return self._items[item]
 
 
 class NamedSprite(Drawable):
@@ -162,25 +157,21 @@ class NamedSprite(Drawable):
         #
         self.name = name
         self.angle = 0
-        self.sprite = prepare.GFX[filename if filename else name]
-        w, h = self.sprite.get_size()
+        self.image = prepare.GFX[filename if filename else name]
+        w, h = self.image.get_size()
         #
         # Scale if needed
         if scale != 1.0:
-            self.sprite = pg.transform.scale(self.sprite, (int(w * scale), int(h * scale)))
+            self.image = pg.transform.scale(self.image, (int(w * scale), int(h * scale)))
             w, h = w * scale, h * scale
         #
         self.rect = pg.Rect(position[0] - w / 2, position[1] - h / 2, w, h)
-
-    def draw(self, surface):
-        """Draw the sprite"""
-        surface.blit(self.sprite, self.rect)
 
     def rotate_to(self, angle):
         """Rotate the sprite"""
         delta = angle - self.angle
         x, y = self.rect.x + self.rect.width / 2, self.rect.y + self.rect.height / 2
-        self.sprite = pg.transform.rotate(self.sprite, delta)
+        self.image = pg.transform.rotate(self.sprite, delta)
         w, h = self.sprite.get_size()
         self.rect = pg.Rect(x - w / 2, y - h / 2, w, h)
 
@@ -195,14 +186,14 @@ class NamedSprite(Drawable):
         h = new_sprite.rect.height / rows
         #
         # Now split the sheet and reset the image
-        sheet = tools.strip_from_sheet(new_sprite.sprite, (0, 0), (w, h), cols, rows)
+        sheet = tools.strip_from_sheet(new_sprite.image, (0, 0), (w, h), cols, rows)
         new_sprite.sprite = sheet[sprite_cell[0] + sprite_cell[1] * cols]
         new_sprite.rect = pg.Rect(position[0] - w / 2, position[1] - h / 2, w, h)
         #
         return new_sprite
 
 
-class ImageButton(Clickable):
+class ImageButton(pg.sprite.LayeredUpdates, Clickable):
     """A button with an image and text
 
     To receive events call the linkEvent method as described in the Clickable
@@ -213,19 +204,17 @@ class ImageButton(Clickable):
     def __init__(self, name, position, filename, text_properties, text,
                  settings, scale=1.0):
         """Initialise the button"""
+        pg.sprite.LayeredUpdates.__init__(self)
         #
         self.image = NamedSprite(name, position, filename, scale=scale)
         self.label = getLabel(text_properties, position, text, settings)
+        self.add(self.image)
+        self.add(self.label)
         #
         super(ImageButton, self).__init__(name, self.image.rect)
 
-    def draw(self, surface):
-        """Draw the button"""
-        self.image.draw(surface)
-        self.label.draw(surface)
 
-
-class ImageOnOffButton(Clickable):
+class ImageOnOffButton(pg.sprite.LayeredUpdates, Clickable):
     """A button with an on and off image and text
 
     To receive events call the linkEvent method as described in the Clickable
@@ -236,18 +225,35 @@ class ImageOnOffButton(Clickable):
     def __init__(self, name, position, on_filename, off_filename, text_properties, text, state,
                  settings, scale=1.0):
         """Initialise the button"""
-        self.state = state
+        pg.sprite.LayeredUpdates.__init__(self)
+        self._state = state
         #
         self.on_image = NamedSprite(name, position, on_filename, scale=scale)
         self.off_image = NamedSprite(name, position, off_filename, scale=scale)
         self.label = getLabel(text_properties, position, text, settings)
+        self.add(self.on_image)
+        self.add(self.off_image)
+        self.add(self.label)
         #
-        super(ImageOnOffButton, self).__init__(name, self.on_image.rect)
+        Clickable.__init__(self, name, self.on_image.rect)
 
-    def draw(self, surface):
+    @property
+    def state(self):
+        return self._state
+
+    @state.setter
+    def state(self, value):
         """Draw the button"""
+        self.log.debug('OnOff state change {0}'.format(value))
+        self._state = value
+        #
         if self.state:
-            self.on_image.draw(surface)
+            self.on_image.visible = True
+            self.off_image.visible = False
         else:
-            self.off_image.draw(surface)
-        self.label.draw(surface)
+            self.on_image.visible = False
+            self.off_image.visible = True
+        #
+        self.on_image.dirty = True
+        self.off_image.dirty = True
+        self.label.dirty = True

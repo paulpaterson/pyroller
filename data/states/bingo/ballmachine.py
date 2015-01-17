@@ -42,7 +42,7 @@ class BallMachine(common.Drawable, loggable.Loggable):
         self.all_balls = [Ball(n) for n in S['machine-balls']]
         self.balls = []
         self.called_balls = []
-        self.speed_buttons = common.DrawableGroup()
+        self.speed_buttons = common.pg.sprite.LayeredDirty()
         self.buttons = common.ClickableGroup()
         self.current_ball = None
         self.interval = self.initial_interval = S['machine-speeds'][0][1] * 1000
@@ -55,18 +55,18 @@ class BallMachine(common.Drawable, loggable.Loggable):
 
     def create_ui(self):
         """Create the UI components"""
-        components = common.DrawableGroup()
+        components = common.pg.sprite.LayeredDirty()
         #
         # The display of all the balls that have been called
         self.called_balls_ui = CalledBallTray(S['called-balls-position'], self.state)
-        components.append(self.called_balls_ui)
+        components.add(self.called_balls_ui)
         #
         # Speed increases based on the number of balls called
         for idx, (name, interval, number_balls) in enumerate(S['machine-speeds']):
             self.speed_transitions[number_balls] = (idx, interval)
         #
         self.cog = CogWheel(self)
-        components.append(self.cog)
+        components.add(self.cog)
         #
         # The spout showing progress towards a new ball
         self.spout_sprites = [
@@ -175,11 +175,12 @@ class BallMachine(common.Drawable, loggable.Loggable):
         self.timer.next_step()
 
 
-class CalledBallTray(common.Drawable, loggable.Loggable):
+class CalledBallTray(pg.sprite.LayeredDirty, loggable.Loggable):
     """A display of the balls that have been called"""
 
     def __init__(self, position, state):
         """Initialise the display"""
+        pg.sprite.LayeredDirty.__init__(self)
         self.addLogger()
         self.state = state
         #
@@ -189,33 +190,30 @@ class CalledBallTray(common.Drawable, loggable.Loggable):
         self.conveyor = common.NamedSprite(
             'bingo-conveyor',
             S['conveyor-position'],
-        )
+            )
         self.initial_x = S['conveyor-position'][0]
         self.current_x = 0
         #
-        self.background = common.NamedSprite('bingo-grill', S['machine-background-position'])
-        self.dropping_balls = common.DrawableGroup()
-        self.moving_balls = common.DrawableGroup()
+        self.dropping_balls = common.pg.sprite.LayeredDirty()
+        self.moving_balls = common.pg.sprite.LayeredDirty()
+        #
+        self.add(self.dropping_balls)
+        self.add(self.moving_balls)
+        self.add(self.conveyor)
+        self.add(common.NamedSprite('bingo-grill', S['machine-background-position']))
 
     def call_ball(self, ball):
         """Call a particular ball"""
         self.called_balls.append(ball)
         ball_ui = SingleBallDisplay('ball', S['machine-ball-position'], ball, self)
-        self.dropping_balls.append(ball_ui)
+        self.dropping_balls.add(ball_ui)
         self.state.add_generator('ball-falling', self.ball_falling(ball_ui))
-
-    def draw(self, surface):
-        """Draw the tray"""
-        self.background.draw(surface)
-        self.moving_balls.draw(surface)
-        self.dropping_balls.draw(surface)
-        self.conveyor.draw(surface)
 
     def reset_display(self):
         """Reset the display of the balls"""
         self.called_balls = []
-        self.dropping_balls.clear()
-        self.moving_balls.clear()
+        self.dropping_balls.empty()
+        self.moving_balls.empty()
 
     def update(self, increment):
         """Update the display of the tray"""
@@ -232,7 +230,7 @@ class CalledBallTray(common.Drawable, loggable.Loggable):
             ball.y += drop_speed
             drop_speed += S['machine-ball-drop-acceleration']
             yield 10
-        self.moving_balls.append(ball)
+        self.moving_balls.add(ball)
         #
         # Remove from the list - note that we have to check the ball is still there
         # because the machine may have been reset between the 'yield' and here
@@ -241,7 +239,7 @@ class CalledBallTray(common.Drawable, loggable.Loggable):
 
     def move_balls(self, increment):
         """Move the balls"""
-        for ball in reversed(self.moving_balls):
+        for ball in reversed(self.moving_balls.sprites()):
             ball.x += increment
             if ball.x >= S['conveyor-ball-drop-off']:
                 self.moving_balls.remove(ball)
@@ -252,6 +250,7 @@ class SingleBallDisplay(common.Drawable, loggable.Loggable):
 
     def __init__(self, name, position, ball, state):
         """Initialise the ball"""
+        common.Drawable.__init__(self)
         self.addLogger()
         #
         self.name = name
@@ -308,6 +307,7 @@ class CogWheel(common.Drawable):
 
     def __init__(self, state):
         """Initialise the cog"""
+        common.Drawable.__init__(self)
         self.state = state
         #
         self.sprites = [
@@ -319,22 +319,17 @@ class CogWheel(common.Drawable):
         self.speed = 0
         self.angle = 0
         self.set_speed(0)
-        self.current_sprite = self.sprites[0].sprite
-        self.x, self.y = S['machine-cog-position']
+        self.image = self.sprites[0].image
+        self.rect = pg.Rect(S['machine-cog-position'][0], S['machine-cog-position'][1],
+                            *self.image.get_size())
 
     def set_speed(self, speed):
         """Set the current speed"""
         self.speed = speed
 
-    def draw(self, surface):
-        """Draw the cog"""
-        w, h = self.current_sprite.get_size()
-        rect = pg.Rect(self.x - w / 2, self.y - h / 2, w, h)
-        surface.blit(self.current_sprite, rect)
-
     def update(self, increment):
         """Update the display of the cog"""
         self.angle = (self.angle + increment) % 360
         # TODO: refactor the rotation logic - should be built into sprite
-        surface = self.sprites[self.speed].sprite.copy()
-        self.current_sprite = pg.transform.rotozoom(surface, self.angle, 1.0)
+        surface = self.sprites[self.speed].image.copy()
+        self.image = pg.transform.rotozoom(surface, self.angle, 1.0)

@@ -16,7 +16,7 @@ class Player(object):
         
     def add_slot(self, hand):
         w, h = prepare.CARD_SIZE
-        hand.slots.append(hand.slots[-1].move(w // 3, 0))
+        hand.slots.add(hand.slots[-1].move(w // 3, 0))
     
     def draw_hands(self, surface):
         for hand in self.hands:

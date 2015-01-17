@@ -119,7 +119,7 @@ class BetPile(object):
         """Returns a list of stacks sorted and arranged by height."""
         chips = defaultdict(list)
         for chip in self.chips:
-            chips[chip.color].append(chip)
+            chips[chip.color].add(chip)
         stacks = [ChipStack(chips[color], (0, 0)) for color in chips]
         stacks = sorted(stacks, key=lambda x: len(x.chips), reverse=True)
         for stack, spot in zip(stacks, self.stack_spots):
@@ -208,7 +208,7 @@ class ChipPile(object):
     def add_chips(self, chips):
         """Adds chips and adjusts stacks."""
         for chip in chips:
-            self.chips[chip.color].append(chip)
+            self.chips[chip.color].add(chip)
         self.stacks = self.make_stacks()
         
     def all_chips(self):
@@ -311,7 +311,7 @@ class ChipRack(object):
 
     def add_chip(self, chip):
         """Add a single chip to the rack."""
-        self.chips[chip.color].append(chip)
+        self.chips[chip.color].add(chip)
 
     def break_chip(self, chip):
         """Returns a list of Chips equal to the value of chip."""

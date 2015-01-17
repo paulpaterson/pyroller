@@ -24,7 +24,7 @@ pg.display.set_mode(RESOLUTION)
 
 # Make the tests work from the test directory
 import sys
-sys.path.append('..')
+sys.path.add('..')
 try:
     from data import tools
 except ImportError:
@@ -275,8 +275,8 @@ class TestControl(unittest.TestCase):
             with mock_pygame_events() as (event_queue, key_queue):
                 #
                 # Push events onto queue
-                event_queue.append(events)
-                key_queue.append(keys)
+                event_queue.add(events)
+                key_queue.add(keys)
                 #
                 # Do the loop
                 self.c.event_loop()
@@ -300,8 +300,8 @@ class TestControl(unittest.TestCase):
             with mock_pygame_events() as (event_queue, key_queue):
                 #
                 # Push events onto queue
-                event_queue.append(events)
-                key_queue.append(keys)
+                event_queue.add(events)
+                key_queue.add(keys)
                 #
                 # Do the loop
                 self.c.event_loop()
@@ -327,8 +327,8 @@ class TestControl(unittest.TestCase):
         with mock_pygame_events() as (event_queue, key_queue):
             #
             # Push events onto queue
-            event_queue.append(events)
-            key_queue.append(keys)
+            event_queue.add(events)
+            key_queue.add(keys)
             #
             # Do the loop
             self.c.event_loop()
@@ -350,7 +350,7 @@ class TestControl(unittest.TestCase):
         with mock_pygame_events() as (event_queue, key_queue):
             #
             # Push events onto queue
-            event_queue.append(events)
+            event_queue.add(events)
             #
             # Do the loop
             self.c.event_loop()
@@ -374,20 +374,20 @@ class TestControl(unittest.TestCase):
             # Push events onto queue
             #
             # With no music handler, events should not call the method
-            event_queue.append(events)
+            event_queue.add(events)
             self.c.event_loop()
             self.assertFalse(self.called['get_event'])
             #
             # With music handler but state not requesting music, should not call the method
             self.c.music_handler = handler
             self.c.state.use_music_handler = False
-            event_queue.append(events)
+            event_queue.add(events)
             self.c.event_loop()
             self.assertFalse(self.called['get_event'])
             #
             # With state requesting music, should call the method
             self.c.state.use_music_handler = True
-            event_queue.append(events)
+            event_queue.add(events)
             self.c.event_loop()
             self.assertTrue(self.called['get_event'])
 

@@ -1,5 +1,6 @@
 """Component that allows the player to select how many cards to play"""
 
+import pygame as pg
 from ...events import EventAware
 from ...components import common
 from . import loggable
@@ -7,11 +8,12 @@ from .settings import SETTINGS as S
 from . import events
 
 
-class CardSelector(common.DrawableGroup, loggable.Loggable, EventAware):
+class CardSelector(common.pg.sprite.LayeredDirty, loggable.Loggable, EventAware):
     """Component to allow the player to select how many cards to play"""
     
     def __init__(self, name, state):
         """Initialise the component"""
+        pg.sprite.LayeredDirty.__init__(self)
         self.addLogger()
         self.initEvents()
         #
@@ -37,7 +39,7 @@ class CardSelector(common.DrawableGroup, loggable.Loggable, EventAware):
                 S, scale=S['card-selection-scale']
             )
             button.linkEvent(common.E_MOUSE_CLICK, self.select_card_number, (idx, number))
-            self.append(button)
+            self.add(button)
             ui.append(button)
         #
         return ui

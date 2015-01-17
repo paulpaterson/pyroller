@@ -17,7 +17,7 @@ class Dealer(object):
             move_dist = self.hand.slots[-1].width + 20
         else:
             move_dist = w // 2
-        self.hand.slots.append(self.hand.slots[-1].move(move_dist, 0))
+        self.hand.slots.add(self.hand.slots[-1].move(move_dist, 0))
 
     def draw_hand(self, surface):
         for card in self.hand.cards:

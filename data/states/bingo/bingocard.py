@@ -1,6 +1,7 @@
 """Classes that manage and display bingo cards"""
 
 import random
+import pygame as pg
 
 from ...prepare import BROADCASTER as B
 from ...components import common
@@ -23,7 +24,7 @@ T_PLAYER = 'player'
 T_DEALER = 'dealer'
 
 
-class BingoLabel(common.Clickable):
+class BingoLabel(pg.sprite.DirtySprite, common.Clickable):
     """A label on a bingo card"""
 
     style_name = 'square-number'
@@ -33,6 +34,7 @@ class BingoLabel(common.Clickable):
 
     def __init__(self, name, card, offset, text):
         """Initialise the label"""
+        pg.sprite.DirtySprite.__init__(self)
         self.name = name
         self.offset = offset
         self.text = text
@@ -50,7 +52,7 @@ class BingoLabel(common.Clickable):
         self.mouse_highlight = common.NamedSprite(
             'bingo-mouse-highlight', (self.x, self.y), scale=self.get_scale())
         #
-        super(BingoLabel, self).__init__(name, self.label.rect)
+        common.Clickable.__init__(self, name, self.label.rect)
 
     def get_highlighter(self, name):
         """Return a highlighter sprite"""
@@ -129,7 +131,7 @@ class BingoSquare(BingoLabel):
         self.label.set_text(str(number))
 
 
-class BingoCard(common.Clickable):
+class BingoCard(pg.sprite.DirtySprite, common.Clickable):
     """A bingo card comprising a number of squares"""
 
     card_owner = T_UNKNOWN
@@ -141,7 +143,8 @@ class BingoCard(common.Clickable):
 
     def __init__(self, name, position, state, index):
         """Initialise the bingo card"""
-        super(BingoCard, self).__init__(name)
+        pg.sprite.DirtySprite.__init__(self)
+        common.Clickable.__init__(self, name)
         #
         self.state = state
         self.x, self.y = position
@@ -171,8 +174,8 @@ class BingoCard(common.Clickable):
                     self, (square_offset * x, square_offset * y_offset + S['card-square-header-offset'][1]), letter
                 )
         #
-        self.clickables = common.ClickableGroup(self.squares.values())
-        self.drawables = common.DrawableGroup([
+        self.clickables = common.ClickableGroup(self.squares.sprites())
+        self.drawables = common.pg.sprite.LayeredDirty([
             self.squares, self.labels,
         ])
         #
@@ -182,7 +185,7 @@ class BingoCard(common.Clickable):
             self.card_back_image = common.NamedSprite(
                 'bingo-card-back', (position[0] + dx, position[1] + dy), scale=S['square-back-scale']
             )
-            self.drawables.append(self.card_back_image)
+            self.drawables.add(self.card_back_image)
         #
         self.card_state = S_NONE
         #
@@ -232,7 +235,7 @@ class BingoCard(common.Clickable):
         """Call a particular square"""
         if not self.active:
             return
-        for square in self.squares.values():
+        for square in self.squares.sprites():
             if square.text == number:
                 square.is_called = True
         self.called_squares.append(number)
@@ -242,7 +245,7 @@ class BingoCard(common.Clickable):
         """Reset a particular square"""
         if not self.active:
             return
-        for square in self.squares.values():
+        for square in self.squares.sprites():
             if square.text == number:
                 square.is_called = False
         self.called_squares.remove(number)
@@ -250,9 +253,9 @@ class BingoCard(common.Clickable):
 
     def reset(self):
         """Reset the card"""
-        for square in self.squares.values():
+        for square in self.squares.sprites():
             square.reset()
-        for label in self.labels.values():
+        for label in self.labels.sprites():
             label.reset()
         self.called_squares = []
         self.update_squares_to_go()
@@ -305,7 +308,7 @@ class BingoCard(common.Clickable):
     def active(self, value):
         """Set whether the card is active"""
         self.is_active = value
-        for square in self.squares.values():
+        for square in self.squares.sprites():
             square.is_active = value
 
     def flash_labels(self):
@@ -324,7 +327,7 @@ class BingoCard(common.Clickable):
         self.highlight_column(None)
 
 
-class CardCollection(common.ClickableGroup, common.DrawableGroup):
+class CardCollection(common.ClickableGroup, common.pg.sprite.LayeredDirty):
     """A set of bingo cards"""
 
     card_class = NotImplementedError
@@ -336,7 +339,7 @@ class CardCollection(common.ClickableGroup, common.DrawableGroup):
         self.state = state
         #
         common.ClickableGroup.__init__(self)
-        common.DrawableGroup.__init__(self, [self.card_class(
+        common.pg.sprite.LayeredDirty.__init__(self, *[self.card_class(
             '%s(%d)' % (self.name, i + 1),
             (self.x + x, self.y + y),
             state, i) for i, (x, y) in enumerate(offsets)]
@@ -374,3 +377,7 @@ class CardCollection(common.ClickableGroup, common.DrawableGroup):
             #
             # Now set numbers in the card
             card.set_new_numbers(new_numbers_dict)
+
+    def __hash__(self):
+        """Return hash representation so we can use in dictionaries etc"""
+        return hash(repr(self))

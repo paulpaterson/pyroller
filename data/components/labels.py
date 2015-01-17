@@ -60,7 +60,7 @@ def _parse_color(color):
     return color
 
 
-class Label(object):
+class Label(pg.sprite.DirtySprite):
     """
     Parent class all labels inherit from. Color arguments can use color names
     or an RGB tuple. rect_attr should be a dict with keys of pygame.Rect
@@ -71,6 +71,7 @@ class Label(object):
     bg is not passed to __init__.
     """
     def __init__(self, path, size, text, color, rect_attr, bg=None):
+        pg.sprite.DirtySprite.__init__(self)
         self.path, self.size = path, size
         if (path, size) not in LOADED_FONTS:
             LOADED_FONTS[(path, size)] = pg.font.Font(path, size)
@@ -105,7 +106,7 @@ class GroupLabel(Label):
     """Creates a Label object which is then appended to group."""
     def __init__(self, group, path, size, text, color, rect_attr, bg=None):
         super(GroupLabel,self).__init__(path, size, text, color, rect_attr, bg)
-        group.append(self)
+        group.add(self)
 
 
 class MultiLineLabel(object):

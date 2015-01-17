@@ -4,12 +4,12 @@ from ...components import common, loggable
 from .settings import SETTINGS as S
 
 
-class MoneyDisplay(common.DrawableGroup, loggable.Loggable):
+class MoneyDisplay(common.pg.sprite.LayeredDirty, loggable.Loggable):
     """Display for the amount of money the player owns"""
 
     def __init__(self, name, position, amount, state):
         """Initialise the display"""
-        common.DrawableGroup.__init__([])
+        common.pg.sprite.LayeredDirty.__init__(self)
         self.addLogger()
         #
         self.state = state
@@ -18,14 +18,17 @@ class MoneyDisplay(common.DrawableGroup, loggable.Loggable):
         x, y = position
         dx, dy = S['money-offsets']
         digits = self.get_desired_digits()
+        self.items = []
         #
         for i in range(self.num_digits + 1):
-            self.append(MoneyDigit(
+            digit = MoneyDigit(
                 'money-digit-{0}'.format(i + 1),
                 (x + i * dx, y + i * dy),
                 digits[i],
                 state
-            ))
+            )
+            self.add(digit)
+            self.items.append(digit)
 
     def get_desired_digits(self):
         """Return the digits to use"""
@@ -38,16 +41,16 @@ class MoneyDisplay(common.DrawableGroup, loggable.Loggable):
     def set_money(self, amount):
         """Set the amount of money"""
         self.amount = amount
-        for digit, item in zip(self.get_desired_digits(), self):
+        for digit, item in zip(self.get_desired_digits(), self.items):
             item.set_digit(digit)
 
 
-class MoneyDigit(common.DrawableGroup, loggable.Loggable):
+class MoneyDigit(common.pg.sprite.LayeredDirty, loggable.Loggable):
     """Display for a single digit of a number"""
 
     def __init__(self, name, position, value, state):
         """Initialise the display"""
-        common.DrawableGroup.__init__([])
+        common.pg.sprite.LayeredDirty.__init__(self)
         self.addLogger()
         #
         self.state = state
@@ -60,8 +63,8 @@ class MoneyDigit(common.DrawableGroup, loggable.Loggable):
             'money-digit', position, value, S
         )
         #
-        self.append(self.background)
-        self.append(self.text)
+        self.add(self.background)
+        self.add(self.text)
         #
         self.new_value = None
         self.hider = None

@@ -30,7 +30,7 @@ class Hand(object):
                     scores = new_scores
             else:
                 for score in scores:
-                    score.append(self.card_values[card.value])
+                    score.add(self.card_values[card.value])
         return [sum(score) for score in scores]
         
     def best_score(self):
