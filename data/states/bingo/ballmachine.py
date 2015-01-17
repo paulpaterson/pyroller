@@ -161,6 +161,9 @@ class BallMachine(common.Drawable, loggable.Loggable):
         """Draw the machine"""
         #
         self.ui.draw(surface)
+        self.called_balls_ui.dropping_balls.draw(surface)
+        self.called_balls_ui.moving_balls.draw(surface)
+        #
         self.called_balls_ui.update(self.state.dt * S['conveyor-speed'] / self.interval)
         self.cog.update(self.state.dt * S['machine-cog-speed'] / self.interval)
         #
@@ -261,7 +264,7 @@ class SingleBallDisplay(common.Drawable, loggable.Loggable):
         self.state = state
         #
         # Create the background chip
-        self.background = common.NamedSprite.from_sprite_sheet(
+        self.bg = common.NamedSprite.from_sprite_sheet(
             'chips', (2, 5),
             S['called-ball-sprite-lookup'][ball.col], position,
             scale=S['machine-ball-sprite-scale']
@@ -270,40 +273,37 @@ class SingleBallDisplay(common.Drawable, loggable.Loggable):
         # And the text for the number
         self.text = common.getLabel(
             'machine-ball',
-            (self.background.rect.width / 2, self.background.rect.height / 2), str(ball.number), S
+            (self.bg.rect.width / 2, self.bg.rect.height / 2), str(ball.number), S
         )
         self.text.color = pg.Color(S['called-ball-font-color'][ball.col])
         self.text.update_text()
         #
         # Write the number on the background
-        self.text.draw(self.background.image)
+        self.text.draw(self.bg.image)
         #
         # And rotate a bit
-        self.background.rotate_to(random.uniform(*S['machine-ball-angle-range']))
-        #
-        self._x, self._y = self.background.rect.x, self.background.rect.y
+        self.bg.rotate_to(random.uniform(*S['machine-ball-angle-range']))
+        w, h = self.bg.image.get_size()
+        self.rect = pg.Rect(position[0] - w / 2, position[1] - h / 2, w, h)
+        self.image = self.bg.image
 
     @property
     def y(self):
-        return self._y
+        return self.rect.y
 
     @y.setter
     def y(self, value):
-        self._y = value
-        self.background.rect.y = value
+        self.rect.y = value
+        self.dirty = True
 
     @property
     def x(self):
-        return self._x
+        return self.rect.x
 
     @x.setter
     def x(self, value):
-        self._x = value
-        self.background.rect.x = value
-
-    def draw(self, surface):
-        """Draw the ball"""
-        self.background.draw(surface)
+        self.rect.x = value
+        self.dirty = True
 
 
 class CogWheel(common.Drawable):
