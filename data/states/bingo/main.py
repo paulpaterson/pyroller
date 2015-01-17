@@ -51,7 +51,7 @@ class Bingo(statemachine.StateMachine):
         #
         self.winning_pattern = patterns.PATTERNS[0]
         #
-        self.pattern_buttons = common.pg.sprite.LayeredDirty()
+        self.pattern_buttons = common.DrawableGroup()
         self.debug_buttons = common.pg.sprite.LayeredDirty()
         self.buttons = common.pg.sprite.LayeredDirty()
         #
@@ -167,9 +167,9 @@ class Bingo(statemachine.StateMachine):
             )
             new_button.linkEvent(common.E_MOUSE_CLICK, self.change_pattern, pattern)
             new_button.pattern = pattern
-            self.pattern_buttons.add(new_button)
+            self.pattern_buttons.add_original(new_button)
             self.buttons.add(new_button)
-        self.ui.extend(self.pattern_buttons)
+            self.ui.append(new_button)
         #
         # Simple generator to flash the potentially winning squares
         self.add_generator('potential-winners', self.flash_potential_winners())
@@ -249,8 +249,8 @@ class Bingo(statemachine.StateMachine):
             self.add_generator(
                 'randomize-buttons',
                 self.randomly_highlight_buttons(
-                    self.pattern_buttons[-1],
-                    self.pattern_buttons[:-1],
+                    self.pattern_buttons.original_objects[-1],
+                    self.pattern_buttons.original_objects[:-1],
                     S['randomize-button-number'], S['randomize-button-delay'],
                     lambda b: self.change_pattern(None, b.pattern)
                 )
@@ -267,7 +267,7 @@ class Bingo(statemachine.StateMachine):
                 square.is_focused = False
         #
         # Update UI
-        for button in self.pattern_buttons:
+        for button in self.pattern_buttons.original_objects:
             button.state = (button.pattern == self.winning_pattern)
 
     def toggle_auto_pick(self, obj, arg):

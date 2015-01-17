@@ -8,12 +8,12 @@ from .settings import SETTINGS as S
 from . import events
 
 
-class CardSelector(common.pg.sprite.LayeredDirty, loggable.Loggable, EventAware):
+class CardSelector(common.DrawableGroup, loggable.Loggable, EventAware):
     """Component to allow the player to select how many cards to play"""
     
     def __init__(self, name, state):
         """Initialise the component"""
-        pg.sprite.LayeredDirty.__init__(self)
+        common.DrawableGroup.__init__(self)
         self.addLogger()
         self.initEvents()
         #
@@ -39,7 +39,7 @@ class CardSelector(common.pg.sprite.LayeredDirty, loggable.Loggable, EventAware)
                 S, scale=S['card-selection-scale']
             )
             button.linkEvent(common.E_MOUSE_CLICK, self.select_card_number, (idx, number))
-            self.add(button)
+            self.add_original(button)
             ui.append(button)
         #
         return ui
@@ -50,9 +50,10 @@ class CardSelector(common.pg.sprite.LayeredDirty, loggable.Loggable, EventAware)
         #
         if number is None:
             self.state.add_generator('random-button-flash', self.state.randomly_highlight_buttons(
-                self[-1], self[:-1],
+                self.original_objects[-1], self.original_objects[:-1],
                 S['randomize-button-number'], S['randomize-button-delay'],
-                lambda b: self.select_card_number(None, (self.index(b), self.index(b) + 1))
+                lambda b: self.select_card_number(
+                    None, (self.original_objects.index(b), self.original_objects.index(b) + 1))
             ))
             return
         #

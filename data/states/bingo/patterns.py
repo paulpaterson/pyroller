@@ -131,11 +131,6 @@ class PatternButton(common.ImageOnOffButton):
 
     def __init__(self, idx, position, on_filename, off_filename, text_properties, text, state,
                  settings, scale=1.0):
-        super(PatternButton, self).__init__(PATTERNS[idx].name, position, on_filename, off_filename,
-                                            text_properties,  text, state,  settings, scale)
-        #
-        # Label needs to be moved over because of the image
-        self.label.rect.x += self.label.rect.w / 2 - settings['winning-pattern-label-width']
         #
         # Put the right logo image on there
         x, y = position
@@ -149,14 +144,43 @@ class PatternButton(common.ImageOnOffButton):
             (x - settings['winning-pattern-logo-offset'], y),
             scale=settings['winning-pattern-logo-scale']
         )
+        #
+        super(PatternButton, self).__init__(PATTERNS[idx].name, position, on_filename, off_filename,
+                                            text_properties,  text, state,  settings, scale)
+        #
+        # Label needs to be moved over because of the image
+        self.label.rect.x += self.label.rect.w / 2 - settings['winning-pattern-label-width']
+        #
+        self.add(self.logo_off_image)
+        self.add(self.logo_on_image)
 
-    def draw(self, surface):
+    @property
+    def state(self):
+        return self._state
+
+    @state.setter
+    def state(self, value):
         """Draw the button"""
-        super(PatternButton, self).draw(surface)
+        self.log.debug('OnOff state change {0}'.format(value))
+        self._state = value
+        #
         if self.state:
-            self.logo_on_image.draw(surface)
+            self.on_image.visible = True
+            self.off_image.visible = False
+            self.logo_on_image.visible = True
+            self.logo_off_image.visible = False
         else:
-            self.logo_off_image.draw(surface)
+            self.on_image.visible = False
+            self.off_image.visible = True
+            self.logo_on_image.visible = False
+            self.logo_off_image.visible = True
+        #
+        self.on_image.dirty = True
+        self.off_image.dirty = True
+        self.label.dirty = True
+        self.logo_on_image.dirty = True
+        self.logo_off_image.dirty = False
+
 
 class RandomPattern(object):
     """Special pattern to indicate random pattern should be used"""

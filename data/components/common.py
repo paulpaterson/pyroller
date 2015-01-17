@@ -102,9 +102,7 @@ class ClickableGroup(list, EventAware):
     def process_events(self, event, scale=(1, 1)):
         """Process all the events"""
         for item in self:
-            # TODO: remove this - just here when migrating to dirty sprite implementation
-            if hasattr(item, 'process_events'):
-                item.process_events(event, scale)
+            item.process_events(event, scale)
 
     def clear(self):
         """Remove all the items from the group
@@ -124,6 +122,21 @@ class Drawable(pg.sprite.DirtySprite):
     def draw(self, surface):
         """Draw this item onto the given surface"""
         surface.blit(self.image, self.rect)
+
+
+class DrawableGroup(pg.sprite.LayeredDirty):
+    """A group where you can get to the original objects"""
+
+    def __init__(self):
+        """Initialise the group"""
+        self.original_objects = []
+        pg.sprite.LayeredDirty.__init__(self)
+
+    def add_original(self, *sprites, **kw):
+        """Add an item to the group"""
+        for item in sprites:
+            self.original_objects.append(item)
+        super(DrawableGroup, self).add(*sprites, **kw)
 
 
 class KeyedDrawableGroup(pg.sprite.Group):
@@ -171,8 +184,8 @@ class NamedSprite(Drawable):
         """Rotate the sprite"""
         delta = angle - self.angle
         x, y = self.rect.x + self.rect.width / 2, self.rect.y + self.rect.height / 2
-        self.image = pg.transform.rotate(self.sprite, delta)
-        w, h = self.sprite.get_size()
+        self.image = pg.transform.rotate(self.image, delta)
+        w, h = self.image.get_size()
         self.rect = pg.Rect(x - w / 2, y - h / 2, w, h)
 
     @classmethod
@@ -187,7 +200,7 @@ class NamedSprite(Drawable):
         #
         # Now split the sheet and reset the image
         sheet = tools.strip_from_sheet(new_sprite.image, (0, 0), (w, h), cols, rows)
-        new_sprite.sprite = sheet[sprite_cell[0] + sprite_cell[1] * cols]
+        new_sprite.image = sheet[sprite_cell[0] + sprite_cell[1] * cols]
         new_sprite.rect = pg.Rect(position[0] - w / 2, position[1] - h / 2, w, h)
         #
         return new_sprite

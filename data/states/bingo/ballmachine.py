@@ -272,7 +272,7 @@ class SingleBallDisplay(common.Drawable, loggable.Loggable):
         self.text.update_text()
         #
         # Write the number on the background
-        self.text.draw(self.background.sprite)
+        self.text.draw(self.background.image)
         #
         # And rotate a bit
         self.background.rotate_to(random.uniform(*S['machine-ball-angle-range']))
