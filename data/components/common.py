@@ -226,7 +226,6 @@ class ImageOnOffButton(pg.sprite.LayeredUpdates, Clickable):
                  settings, scale=1.0):
         """Initialise the button"""
         pg.sprite.LayeredUpdates.__init__(self)
-        self._state = state
         #
         self.on_image = NamedSprite(name, position, on_filename, scale=scale)
         self.off_image = NamedSprite(name, position, off_filename, scale=scale)
@@ -236,6 +235,7 @@ class ImageOnOffButton(pg.sprite.LayeredUpdates, Clickable):
         self.add(self.label)
         #
         Clickable.__init__(self, name, self.on_image.rect)
+        self.state = state
 
     @property
     def state(self):

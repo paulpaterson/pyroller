@@ -53,7 +53,7 @@ class Bingo(statemachine.StateMachine):
         #
         self.pattern_buttons = common.pg.sprite.LayeredDirty()
         self.debug_buttons = common.pg.sprite.LayeredDirty()
-        self.buttons = common.pg.sprite.LayeredDirty([self.pattern_buttons])
+        self.buttons = common.pg.sprite.LayeredDirty()
         #
         if prepare.DEBUG:
             self.buttons.add(self.debug_buttons)
@@ -147,7 +147,7 @@ class Bingo(statemachine.StateMachine):
         # self.all_cards.draw(surface)
         # self.ball_machine.draw(surface)
         self.buttons.draw(surface)
-        # self.card_selector.draw(surface)
+        self.card_selector.draw(surface)
         # self.money_display.draw(surface)
         #
 
@@ -168,6 +168,7 @@ class Bingo(statemachine.StateMachine):
             new_button.linkEvent(common.E_MOUSE_CLICK, self.change_pattern, pattern)
             new_button.pattern = pattern
             self.pattern_buttons.add(new_button)
+            self.buttons.add(new_button)
         self.ui.extend(self.pattern_buttons)
         #
         # Simple generator to flash the potentially winning squares
@@ -346,9 +347,12 @@ class Bingo(statemachine.StateMachine):
         self.create_card_collection()
         self.cards.set_card_numbers(self.casino_player.stats['Bingo'].get('_last squares', []))
         #
-        self.all_cards.extend(self.cards)
-        self.all_cards.extend(self.dealer_cards)
-        self.ui.extend(self.cards)
+        for item in self.cards:
+            self.all_cards.add(item)
+        for item in self.dealer_cards:
+            self.all_cards.add(item)
+        for item in self.cards:
+            self.ui.append(item)
         self.restart_game(None, None)
 
     def highlight_patterns(self, pattern, one_shot):

@@ -58,7 +58,7 @@ class CardSelector(common.pg.sprite.LayeredDirty, loggable.Loggable, EventAware)
         #
         self.number_of_cards = number
         self.log.info('Pressed card selection button {0}, number cards {1}'.format(clicked_idx, number))
-        for idx, button in enumerate(self):
+        for idx, button in enumerate(self.ui):
             button.state = idx == clicked_idx
         #
         self.processEvent((events.E_NUM_CARDS_CHANGED, number))
